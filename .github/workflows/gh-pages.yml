@@ -19,3 +19,46 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
       - uses: actions/deploy-pages@v4
         id: deployment
+name: Build & Deploy GitHub Pages
+
+on:
+  push:
+    branches: [ main ]          # main に push したら実行
+  workflow_dispatch:            # 手動実行ボタン
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:                    # 同時実行を防ぐ（任意）
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 1) ビルド & アーティファクト作成
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # （必要なら）Node・Python などセットアップ＋ビルドコマンド
+      # 例: npm ci && npm run build → ./dist が生成されるケース
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      # - run: npm ci
+      # - run: npm run build
+
+      # 静的 HTML だけの場合はビルド不要。↓の path をリポジトリ直下に。
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .               # ./dist など、公開したいフォルダーを指定
+
+  # 2) デプロイ
+  deploy:
+    needs: build                # ビルド完了後に実行
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment
